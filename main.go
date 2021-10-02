@@ -7,7 +7,6 @@ import (
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/valyala/fastrand"
 	"image"
-	"image/color"
 	"log"
 	"strconv"
 )
@@ -19,17 +18,6 @@ const (
 	pixelSize           = 10
 )
 
-var (
-	BGColor  = color.RGBA{0x00, 0x00, 0x00, 0xff}
-	RedColor = color.RGBA{255, 0, 0, 255}
-
-	pointerImage = ebiten.NewImage(8, 8)
-)
-
-func init() {
-	pointerImage.Fill(color.RGBA{0xff, 0, 0, 0xff})
-}
-
 type Game struct {
 	i          int
 	pixSlice   [screenHeight/pixelSize + 2][screenWidth/pixelSize + 2]uint32
@@ -37,25 +25,9 @@ type Game struct {
 	noiseImage *image.RGBA
 }
 
-type rand struct {
-	x, y, z, w uint32
-}
-
-/*
-func (r *rand) next() uint32 {
-	// math/rand is too slow to keep 60 FPS on web browsers.
-	// Use Xorshift instead: http://en.wikipedia.org/wiki/Xorshift
-	t := r.x ^ (r.x << 11)
-	r.x, r.y, r.z = r.y, r.z, r.w
-	r.w = (r.w ^ (r.w >> 19)) ^ (t ^ (t >> 8))
-	return r.w
-}
-*/
 func (g *Game) init() error {
 	return nil
 }
-
-//var theRand = &rand{12345678, 4185243, 776511, 45411}
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
@@ -117,7 +89,6 @@ func (g *Game) Update() error {
 			}
 		}
 		g.i++
-		//time.Sleep(time.Second)
 	}
 	return nil
 }
