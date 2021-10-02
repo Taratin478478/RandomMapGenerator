@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	screenWidth  = 1000
-	screenHeight = 1000
+	screenWidth         = 1000
+	screenHeight        = 1000
+	balancingIterations = 10
+	pixelSize           = 10
 )
 
 var (
@@ -30,8 +32,8 @@ func init() {
 
 type Game struct {
 	i          int
-	pixSlice   [screenHeight/10 + 2][screenWidth/10 + 2]uint32
-	pixSlice2  [screenHeight / 10][screenWidth / 10]uint32
+	pixSlice   [screenHeight/pixelSize + 2][screenWidth/pixelSize + 2]uint32
+	pixSlice2  [screenHeight / pixelSize][screenWidth / pixelSize]uint32
 	noiseImage *image.RGBA
 }
 
@@ -50,8 +52,6 @@ func (r *rand) next() uint32 {
 }
 */
 func (g *Game) init() error {
-	//g.pixSlice = [screenHeight + 2][screenWidth + 2]uint32{}
-	//g.pixSlice2 = [screenHeight][screenWidth]uint32{}
 	return nil
 }
 
@@ -60,26 +60,26 @@ func (g *Game) init() error {
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		//fill matrix with random numbers
-		for i1 := 0; i1 < screenHeight/10+2; i1++ {
-			for i2 := 0; i2 < screenWidth/10+2; i2++ {
+		for i1 := 0; i1 < screenHeight/pixelSize+2; i1++ {
+			for i2 := 0; i2 < screenWidth/pixelSize+2; i2++ {
 				x := uint32(uint8(fastrand.Uint32()))
 				g.pixSlice[i1][i2] = x
 			}
 		}
-		//balancing 1
-		for i1 := 1; i1 < screenHeight/10+1; i1++ {
-			for i2 := 1; i2 < screenWidth/10+1; i2++ {
+		//balancing
+		for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
+			for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
 				g.pixSlice2[i1-1][i2-1] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 9
 			}
-		}
-		for j := 0; j < 10; j++ {
-			for i1 := 1; i1 < screenHeight/10+1; i1++ {
-				for i2 := 1; i2 < screenWidth/10+1; i2++ {
+		} //balancing {balancingIterations} more times
+		for j := 0; j < balancingIterations; j++ {
+			for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
+				for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
 					g.pixSlice[i1][i2] = g.pixSlice2[i1-1][i2-1]
 				}
 			}
-			for i1 := 1; i1 < screenHeight/10+1; i1++ {
-				for i2 := 1; i2 < screenWidth/10+1; i2++ {
+			for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
+				for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
 					g.pixSlice2[i1-1][i2-1] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 9
 				}
 			}
@@ -87,10 +87,10 @@ func (g *Game) Update() error {
 		//filling screen pixels
 		i := 0
 		var rc, gc, bc uint8
-		for i1 := 0; i1 < screenHeight/10; i1++ {
-			for i2 := 0; i2 < screenWidth/10; i2++ {
+		for i1 := 0; i1 < screenHeight/pixelSize; i1++ {
+			for i2 := 0; i2 < screenWidth/pixelSize; i2++ {
 				n := uint8(g.pixSlice2[i1][i2])
-				if i1 == 0 || i2 == 0 || i1 == screenHeight/10 - 1 || i2 ==screenWidth/10 - 1 { //edge (some gen bugs)
+				if i1 == 0 || i2 == 0 || i1 == screenHeight/pixelSize-1 || i2 == screenWidth/pixelSize-1 { //edge (some gen bugs)
 					rc, gc, bc = 255, 0, 0
 				} else if n > 137 { //mountains
 					rc, gc, bc = 20, 15, 11
@@ -105,12 +105,12 @@ func (g *Game) Update() error {
 				} else { //deep water
 					rc, gc, bc = 51, 51, 255
 				}
-				for i3 := 0; i3 < 10; i3++ {
-					for i4 := 0; i4 < 10; i4++ {
-						g.noiseImage.Pix[4*((i1*10+i3)*screenHeight+(i2*10+i4))] = rc
-						g.noiseImage.Pix[4*((i1*10+i3)*screenHeight+(i2*10+i4))+1] = gc
-						g.noiseImage.Pix[4*((i1*10+i3)*screenHeight+(i2*10+i4))+2] = bc
-						g.noiseImage.Pix[4*((i1*10+i3)*screenHeight+(i2*10+i4))+3] = 0xff
+				for i3 := 0; i3 < pixelSize; i3++ {
+					for i4 := 0; i4 < pixelSize; i4++ {
+						g.noiseImage.Pix[4*((i1*pixelSize+i3)*screenHeight+(i2*pixelSize+i4))] = rc
+						g.noiseImage.Pix[4*((i1*pixelSize+i3)*screenHeight+(i2*pixelSize+i4))+1] = gc
+						g.noiseImage.Pix[4*((i1*pixelSize+i3)*screenHeight+(i2*pixelSize+i4))+2] = bc
+						g.noiseImage.Pix[4*((i1*pixelSize+i3)*screenHeight+(i2*pixelSize+i4))+3] = 0xff
 						i++
 					}
 				}
