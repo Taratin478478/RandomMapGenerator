@@ -20,7 +20,7 @@ const (
 
 type Game struct {
 	i          int
-	pixSlice   [screenHeight/pixelSize + 2][screenWidth/pixelSize + 2]uint32
+	pixSlice   [screenHeight / pixelSize][screenWidth / pixelSize]uint32
 	pixSlice2  [screenHeight / pixelSize][screenWidth / pixelSize]uint32
 	noiseImage *image.RGBA
 }
@@ -32,27 +32,45 @@ func (g *Game) init() error {
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		//fill matrix with random numbers
-		for i1 := 0; i1 < screenHeight/pixelSize+2; i1++ {
-			for i2 := 0; i2 < screenWidth/pixelSize+2; i2++ {
+		for i1 := 0; i1 < screenHeight/pixelSize; i1++ {
+			for i2 := 0; i2 < screenWidth/pixelSize; i2++ {
 				x := uint32(uint8(fastrand.Uint32()))
-				g.pixSlice[i1][i2] = x
+				g.pixSlice2[i1][i2] = x
 			}
 		}
-		//balancing
-		for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
-			for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
-				g.pixSlice2[i1-1][i2-1] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 9
-			}
-		} //balancing {balancingIterations} more times
+		//balancing {balancingIterations} times
 		for j := 0; j < balancingIterations; j++ {
-			for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
-				for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
-					g.pixSlice[i1][i2] = g.pixSlice2[i1-1][i2-1]
+			for i1 := 0; i1 < screenHeight/pixelSize; i1++ {
+				for i2 := 0; i2 < screenWidth/pixelSize; i2++ {
+					g.pixSlice[i1][i2] = g.pixSlice2[i1][i2]
 				}
 			}
-			for i1 := 1; i1 < screenHeight/pixelSize+1; i1++ {
-				for i2 := 1; i2 < screenWidth/pixelSize+1; i2++ {
-					g.pixSlice2[i1-1][i2-1] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 9
+			for i1 := 0; i1 < screenHeight/pixelSize; i1++ {
+				for i2 := 0; i2 < screenWidth/pixelSize; i2++ {
+					if i1 == 0 {
+						if i2 == 0 {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 4
+						} else if i2 == screenWidth/pixelSize-1 {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2]) / 4
+						} else {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 6
+						}
+					} else if i1 == screenHeight/pixelSize-1 {
+						if i2 == 0 {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1]) / 4
+						} else if i2 == screenWidth/pixelSize-1 {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2]) / 4
+						} else {
+							g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1]) / 6
+						}
+
+					} else if i2 == 0 {
+						g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 6
+					} else if i2 == screenWidth/pixelSize-1 {
+						g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2]) / 6
+					} else {
+						g.pixSlice2[i1][i2] = (g.pixSlice[i1-1][i2-1] + g.pixSlice[i1-1][i2] + g.pixSlice[i1-1][i2+1] + g.pixSlice[i1][i2-1] + g.pixSlice[i1][i2] + g.pixSlice[i1][i2+1] + g.pixSlice[i1+1][i2-1] + g.pixSlice[i1+1][i2] + g.pixSlice[i1+1][i2+1]) / 9
+					}
 				}
 			}
 		}
@@ -62,7 +80,7 @@ func (g *Game) Update() error {
 		for i1 := 0; i1 < screenHeight/pixelSize; i1++ {
 			for i2 := 0; i2 < screenWidth/pixelSize; i2++ {
 				n := uint8(g.pixSlice2[i1][i2])
-				if i1 == 0 || i2 == 0 || i1 == screenHeight/pixelSize-1 || i2 == screenWidth/pixelSize-1 { //edge (some gen bugs)
+				if i1 == 0 || i2 == 0 || i1 == screenHeight/pixelSize-1 || i2 == screenWidth/pixelSize-1 { //edge
 					rc, gc, bc = 255, 0, 0
 				} else if n > 137 { //mountains
 					rc, gc, bc = 20, 15, 11
@@ -90,6 +108,7 @@ func (g *Game) Update() error {
 		}
 		g.i++
 	}
+
 	return nil
 }
 
