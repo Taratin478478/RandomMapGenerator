@@ -6,13 +6,11 @@ import (
 	"log"
 	"strconv"
 	"time"
-	
+
 	"github.com/hajimehoshi/ebiten"
 	"github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/inpututil"
 	"github.com/valyala/fastrand"
-
-	
 )
 
 const (
@@ -80,7 +78,7 @@ func (g *Game) UpdatePixels(j int) error {
 	return nil
 }
 
-func (g *Game) Update(_ *ebiten.Image) error {
+func (g *Game) Update() error {
 	/*
 		if ebiten.IsKeyPressed(ebiten.KeyUp) && g.pixelSize < 100 {
 			g.pixelSize++
